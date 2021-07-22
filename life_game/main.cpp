@@ -20,6 +20,6 @@ int main() {
 		game._one_beat();
 	}
 	
-
+	std::cerr << "the end\n";
 	return 0;
 }
