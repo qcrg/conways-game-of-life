@@ -31,20 +31,3 @@ const coord_t cell::_show_x_coord() const
 {
 	return _x_coord;
 }
-
-
-#define d_op(OP)\
-	bool operator OP (const cell_coord& lhs, const cell_coord& rhs) {\
-		return std::make_pair(lhs.y, lhs.x) OP std::pair(rhs.y, rhs.x);\
-	}
-
-d_op(< );
-d_op(> );
-d_op(<= );
-d_op(>= );
-d_op(!= );
-d_op(== );
-
-
-
-#undef d_op

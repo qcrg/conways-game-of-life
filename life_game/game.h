@@ -15,6 +15,8 @@
 
 		void _one_beat();
 
+		void setCell(coord_t x, coord_t y);
+
 	private:
 																					//		 xxx
 		std::vector<std::vector<bool>> _game_field; // x * MAX_GAME_FIELD_Y + y		//		y000

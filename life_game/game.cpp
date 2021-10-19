@@ -119,3 +119,14 @@ void set_change_list(std::set<cell_coord>& list, std::vector<cell_coord>& _to_ch
 		}
 	}
 }
+
+
+void game::setCell(coord_t x, coord_t y)
+{
+	if (x < _game_field.size() && y < _game_field.begin()->size())
+	{
+		bool cell = !_game_field[x][y];
+		_game_field[x][y] = cell;
+		_alive_cells.insert({ x, y });
+	}
+}

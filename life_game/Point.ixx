@@ -43,11 +43,20 @@ export namespace pnd
 	template<typename _Ty>
 	_Ty scale2(Point2* origin, _Ty* src, float scale_factor)
 	{
+		float rounding;
+		float first;
 		_Ty res;
 		float tmp_scale = src->w * scale_factor < 1 ? 1 / src->w : scale_factor;
 
-		res.x = (uint32_t)((src->x - origin->x) * tmp_scale);
-		res.y = (uint32_t)((src->y - origin->y) * tmp_scale);
+		first = (src->x - origin->x) * tmp_scale;
+		rounding = for_rounding * (first > 0 ? +1 : -1);
+		res.x = (uint32_t)(first + rounding);
+
+		first = (src->y - origin->y) * tmp_scale;
+		rounding = for_rounding * (first > 0 ? +1 : -1);
+		res.y = (uint32_t)(first + rounding);
+
+
 		res.w = src->w * tmp_scale;
 
 		return res;
@@ -56,12 +65,27 @@ export namespace pnd
 	template<typename _Ty>
 	_Ty scale3(Point3* origin, _Ty* src, float scale_factor)
 	{
+		float rounding;
+		float first;
 		_Ty res;
 		float tmp_scale = src->w * scale_factor < 1 ? 1 / src->w : scale_factor;
 
-		res.x = (uint32_t)((src->x - origin->x) * tmp_scale);
-		res.y = (uint32_t)((src->y - origin->y) * tmp_scale);
-		res.z = (uint32_t)((src->z - origin->z) * tmp_scale);
+
+		first = (src->x - origin->x) * tmp_scale;
+		rounding = for_rounding * (first > 0 ? +1 : -1);
+		res.x = (uint32_t)(first + rounding);
+
+
+		first = (src->y - origin->y) * tmp_scale;
+		rounding = for_rounding * (first > 0 ? +1 : -1);
+		res.y = (uint32_t)(first + rounding);
+
+
+		first = (src->z - origin->z) * tmp_scale;
+		rounding = for_rounding * (first > 0 ? +1 : -1);
+		res.z = (uint32_t)(first + rounding);
+
+
 		res.w = src->w * tmp_scale;
 
 		return res;
