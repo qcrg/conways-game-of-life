@@ -130,3 +130,8 @@ void game::setCell(coord_t x, coord_t y)
 		_alive_cells.insert({ x, y });
 	}
 }
+
+const std::set<cell_coord>& game::getAliveCells() const
+{
+	return _alive_cells;
+}

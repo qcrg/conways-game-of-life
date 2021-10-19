@@ -17,6 +17,8 @@
 
 		void setCell(coord_t x, coord_t y);
 
+		const std::set<cell_coord>& getAliveCells() const;
+
 	private:
 																					//		 xxx
 		std::vector<std::vector<bool>> _game_field; // x * MAX_GAME_FIELD_Y + y		//		y000

@@ -149,7 +149,13 @@ void draw(SDL_Renderer* rend, game& gm)
 
 	int x_ = 0;
 	int y_ = 0;
-	for (const auto& __x : gm._show_game_field())
+
+	for (const auto& _cell : gm.getAliveCells())
+	{
+		drawRect(rend, _cell.y, _cell.x);
+	}
+
+	/*for (const auto& __x : gm._show_game_field())
 	{
 		for (const auto& __y : __x)
 		{
@@ -158,7 +164,7 @@ void draw(SDL_Renderer* rend, game& gm)
 		}
 		y_ = 0;
 		++x_;
-	}
+	}*/
 
 	SDL_RenderPresent(rend);
 }
