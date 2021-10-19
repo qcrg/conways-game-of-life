@@ -127,7 +127,17 @@ void game::setCell(coord_t x, coord_t y)
 	{
 		bool cell = !_game_field[x][y];
 		_game_field[x][y] = cell;
-		_alive_cells.insert({ x, y });
+
+		if (cell)
+		{
+			_alive_cells.insert({ x, y });
+		}
+		else
+		{
+			//auto dead_cell = _alive_cells.find({ x, y });
+			_alive_cells.erase({x, y});
+		}
+
 	}
 }
 
