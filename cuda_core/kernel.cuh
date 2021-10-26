@@ -9,17 +9,9 @@ struct Coords
 	unsigned int y;
 };
 
-bool operator== (const Coords& lhs, const Coords& rhs)
-{
-	return lhs.x == rhs.x && lhs.y == rhs.y;
-}
+bool operator== (const Coords& lhs, const Coords& rhs);
 
-bool operator< (const Coords& lhs, const Coords& rhs)
-{
-	bool c = lhs.x < rhs.x;
-	if (c) return c;
-	return lhs.x == rhs.x ? lhs.y < rhs.y : false;
-}
+bool operator< (const Coords& lhs, const Coords& rhs);
 
 class Game
 {
@@ -29,9 +21,10 @@ public:
 	void tick();
 	void setCell(Coords cell);
 	const std::set<Coords>& getAliveCells() const;
+
+	const Coords max;
 private:
 	bool* game_field;
 	std::set<Coords> alive_cells;
-	const Coords max;
 	cudaDeviceProp current_device;
 };

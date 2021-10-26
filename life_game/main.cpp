@@ -4,22 +4,25 @@
 #include <condition_variable>
 #include <chrono>
 
-
-#include "game.h"
-#include "input.h"
-#include "const_values.h"
+#include "../cuda_core/kernel.cuh"
 
 import Sdl;
 import Point;
 
-static int SCREEN_WIDTH = 640;
-static int SCREEN_HEIGHT = 480;
-static int OFFSET_X = 0;
-static int OFFSET_Y = 0;
-static pnd::Point2 SCALE = { 1, 1, 1 };
-static pnd::Point2 ORIGIN = { 0, 0, 0 };
+int SCREEN_WIDTH = 640;
+int SCREEN_HEIGHT = 480;
 
-void draw(SDL_Renderer* rend, game& gm);
+float OFFSET_X = 0;
+float OFFSET_Y = 0;
+
+float SHEAR_SIZE = 5.0f;
+float RECT_SIZE = SHEAR_SIZE * 0.8f;
+
+pnd::Point2 SCALE = { 1, 1, 1 };
+pnd::Point2 ORIGIN = { 0, 0, 0 };
+
+void draw(SDL_Renderer* rend, Game& gm);
+#include "main_funcs.h"
 
 int main(int argc, char* argv[])
 {
@@ -29,14 +32,17 @@ int main(int argc, char* argv[])
 		SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	sdl.initRenderer(-1, SDL_RENDERER_ACCELERATED);
 
-	input in("game_info");
-	game gm(in.get_alive_cels());
+	Game gm(1000, 1000);
+	gm.setCell({ 0, 0 });
+	gm.setCell({ 0, 1 });
+	gm.setCell({ 1, 0 });
+	gm.setCell({ 2, 0 });
 
-	std::condition_variable cv;
-
-	bool play = false;
+	bool play = true;
 	bool one_beat = false;
+	int speed = 33;
 	bool quit = false;
+
 	while (!quit)
 	{
 		SDL_Event mEvent;
@@ -50,9 +56,7 @@ int main(int argc, char* argv[])
 						{
 							case SDL_WINDOWEVENT_RESIZED:
 								{
-									SDL_WindowEvent& __tmp = mEvent.window;
-									SCREEN_WIDTH = __tmp.data1;
-									SCREEN_HEIGHT = __tmp.data2;
+									windowResized(SCREEN_WIDTH, SCREEN_HEIGHT, mEvent.window);
 								}
 								break;
 						}
@@ -60,43 +64,22 @@ int main(int argc, char* argv[])
 					break;
 				case SDL_MOUSEMOTION:
 					{
-						if(mEvent.motion.state & SDL_BUTTON_MIDDLE)
-						{
-							OFFSET_X += mEvent.motion.xrel;
-							OFFSET_Y += mEvent.motion.yrel;
-						}
+						mouseMotionEvent(OFFSET_X, OFFSET_Y, mEvent.motion);
 					}
 					break;
 				case SDL_MOUSEWHEEL:
 					{
-						float scale = (mEvent.wheel.y > 0 ? 2.0f : 0.5f);
-						SCALE = pnd::scale2(&ORIGIN, &SCALE, scale);
+						scaleWithWheel(ORIGIN, SCALE, mEvent.wheel);
 					}
 					break;
 				case SDL_MOUSEBUTTONUP:
 					{
-						if (mEvent.button.button & SDL_BUTTON_LEFT)
-						{
-							int foo_x = (mEvent.button.x / SCALE.x - OFFSET_X) / 10.0f;
-							int foo_y = (mEvent.button.y / SCALE.y - OFFSET_Y) / 10.0f;
-							gm.setCell(foo_x, foo_y);
-						}
+						killCell(gm, mEvent.button);
 					}
+					break;
 				case SDL_KEYDOWN:
 					{
-						switch(mEvent.key.keysym.sym)
-						{
-							case SDLK_r:
-								{
-									play = !play;
-								}
-								break;
-							case SDLK_d:
-								{
-									one_beat = true;
-								}
-								break;
-						}
+						keyDown(play, one_beat, speed, mEvent.key);
 					}
 					break;
 				case SDL_QUIT:
@@ -107,19 +90,11 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		
-		SDL_Delay(33);
 
-		if (play)
-		{
-			gm._one_beat();
-		}
-		else if (one_beat)
-		{
-			gm._one_beat();
-			one_beat = false;
-		}
-		
+		SDL_Delay(speed);
+		oneBeat(gm, one_beat, play);
+
+
 		draw(sdl.getRenderer().get(), gm);
 
 	}
@@ -130,41 +105,30 @@ int main(int argc, char* argv[])
 
 void drawRect(SDL_Renderer* rend, int x, int y)
 {
-	int rect_size = 8 * SCALE.x;
-	SDL_Rect rect{ (OFFSET_X + 10 * x) * SCALE.x, (OFFSET_Y + 10 * y) * SCALE.y, rect_size, rect_size};
+	int rect_size = RECT_SIZE * SCALE.x;
+	SDL_Rect rect{ (OFFSET_X + SHEAR_SIZE * x) * SCALE.x, (OFFSET_Y + SHEAR_SIZE * y) * SCALE.y, rect_size, rect_size};
 	SDL_RenderFillRect(rend, &rect);
 }
 
-void draw(SDL_Renderer* rend, game& gm)
+void draw(SDL_Renderer* rend, Game& gm)
 {
 	SDL_SetRenderDrawColor(rend, 0, 0, 0, 255);
 	SDL_RenderClear(rend);
 
 	SDL_SetRenderDrawColor(rend, 48, 213, 200, 255);
 
-	SDL_Rect rect{ (OFFSET_X - 2) * SCALE.x, (OFFSET_Y - 2) * SCALE.y, MAX_GAME_FIELD_X * SCALE.x * 10 + 2, MAX_GAME_FIELD_Y * SCALE.y * 10 + 2};
+	//for(int i = 0;)
+
+	SDL_Rect rect{ (OFFSET_X - 2) * SCALE.x, (OFFSET_Y - 2) * SCALE.y, gm.max.x * SCALE.x * SHEAR_SIZE + 2, gm.max.y * SCALE.y * SHEAR_SIZE + 2};
 	SDL_RenderDrawRect(rend, &rect);
 
 	SDL_SetRenderDrawColor(rend, 255, 0, 0, 255);
 
-	int x_ = 0;
-	int y_ = 0;
 
 	for (const auto& _cell : gm.getAliveCells())
 	{
-		drawRect(rend, _cell.y, _cell.x);
+		drawRect(rend, _cell.x, _cell.y);
 	}
-
-	/*for (const auto& __x : gm._show_game_field())
-	{
-		for (const auto& __y : __x)
-		{
-			if(__y) drawRect(rend, x_, y_);
-			++y_;
-		}
-		y_ = 0;
-		++x_;
-	}*/
-
 	SDL_RenderPresent(rend);
 }
+

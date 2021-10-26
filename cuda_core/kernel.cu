@@ -104,23 +104,25 @@ __global__ void ckeckCell(Coords* changed, Coords* check, unsigned int check_siz
 			unsigned int x = cell.x + tmp_x;
 			unsigned int y = cell.y + tmp_y;
 			bool* cell_value = game_field + COORD(x, y, max.y);
-			if(global_idx == 5)printf("global_idx(%u), (%u, %u): %s\n",global_idx, x, y, *cell_value ? "true" : "false");//del
+			//if(global_idx == 4)printf("global_idx(%u), (%u, %u): %s\n",global_idx, x, y, *cell_value ? "true" : "false");//del
 
 			if (*cell_value)
 				++alive_cells;
 		}
 	}
 
-	printf("global_idx: %d\t Alive cells: %d\t (%d, %d)\n", global_idx, alive_cells, cell.x, cell.y);//del
+	//printf("global_idx: %d\t Alive cells: %d\t (%d, %d)\n", global_idx, alive_cells, cell.x, cell.y);//del
 
 	
-	bool* cell_in_game_field = game_field + COORD(cell.x, cell.y, max.y);
-	bool have_3_or_4_alive_cells = (3 <= alive_cells || alive_cells <= 4);
+	bool *cell_in_game_field = game_field + COORD(cell.x, cell.y, max.y);
+	bool have_3_or_4_alive_cells = (3 == alive_cells || alive_cells == 4);
 	bool change_cage = *cell_in_game_field ^ have_3_or_4_alive_cells;
 
 	if (change_cage)
 	{
-		*cell_in_game_field = !*cell_in_game_field;
+		//printf("global_idx: %d; (%u, %u); cell_in_game_field: %d; have_3_or_4_alive_cells: %d; change_cage: %d\n",
+		//	global_idx, cell.x, cell.y, *cell_in_game_field, have_3_or_4_alive_cells, change_cage);//del
+
 		changed[global_idx] = cell;
 	}
 	else
@@ -172,22 +174,25 @@ void Game::tick()
 	CHECK_K(cudaEventRecord(sync, 0));
 	ckeckCell KERNEL_ARGS2(grid_size, block_size) (changed.data(), check.data(), check.size(), max, game_field);
 	CHECK_K(cudaEventSynchronize(sync));
-	CHECK_K(cudaEventDestroy(sync));
 
 
 
 
-	for (auto cell : changed)
+	for (unsigned i = 0; i < changed.size(); ++i)
 	{
+		auto cell = changed[i];
 		if (!(cell == Coords{ UINT_MAX, UINT_MAX }))
 		{
 			auto it = alive_cells.insert(cell);
+			bool debug = game_field[COORD(cell.x, cell.y, max.y)];
+			game_field[COORD(cell.x, cell.y, max.y)] = it.second;
 			if (!it.second)
 			{
 				alive_cells.erase(it.first);
 			}
 		}
 	}
+	//CHECK_K(cudaEventDestroy(sync));
 }
 
 void Game::setCell(Coords cell)
@@ -207,4 +212,18 @@ void Game::setCell(Coords cell)
 const std::set<Coords>& Game::getAliveCells() const
 {
 	return alive_cells;
+}
+
+
+
+bool operator== (const Coords& lhs, const Coords& rhs)
+{
+	return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+bool operator< (const Coords& lhs, const Coords& rhs)
+{
+	bool c = lhs.x < rhs.x;
+	if (c) return c;
+	return lhs.x == rhs.x ? lhs.y < rhs.y : false;
 }
