@@ -101,6 +101,7 @@
     <ClCompile Include="..\life_game\main.cpp" />
     <ClCompile Include="..\life_game\Point.ixx" />
     <ClCompile Include="..\life_game\window.ixx" />
+    <ClCompile Include="kernel.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

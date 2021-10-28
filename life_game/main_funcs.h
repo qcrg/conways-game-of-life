@@ -51,7 +51,7 @@ void killCell(Game& gm, SDL_MouseButtonEvent& event_)
 	}
 }
 
-void keyDown(bool& play, bool& one_beat, int& speed, SDL_KeyboardEvent& event_)
+void keyDown(bool& play, bool& one_beat, bool& show_field, int& speed, SDL_KeyboardEvent& event_)
 {
 	switch (event_.keysym.sym)
 	{
@@ -77,6 +77,11 @@ void keyDown(bool& play, bool& one_beat, int& speed, SDL_KeyboardEvent& event_)
 			speed += 2;
 	}
 	break;
+	case SDLK_q:
+	{
+		show_field = !show_field;
+	}
+	break;
 	}
 }
 
@@ -91,4 +96,37 @@ void oneBeat(Game& gm, bool& one_beat, bool play)
 		gm.tick();
 		one_beat = false;
 	}
+}
+
+void setFirstGeneration(Game& gm)
+{
+	gm.setCell({ 500, 500 });
+	gm.setCell({ 500, 501 });
+	gm.setCell({ 500, 502 });
+	gm.setCell({ 500, 503 });
+	gm.setCell({ 500, 504 });
+	gm.setCell({ 500, 505 });
+	gm.setCell({ 500, 506 });
+	gm.setCell({ 500, 507 });
+	gm.setCell({ 500, 509 });
+	gm.setCell({ 500, 510 });
+	gm.setCell({ 500, 511 });
+	gm.setCell({ 500, 512 });
+	gm.setCell({ 500, 513 });
+	gm.setCell({ 500, 517 });
+	gm.setCell({ 500, 518 });
+	gm.setCell({ 500, 519 });
+	gm.setCell({ 500, 526 });
+	gm.setCell({ 500, 527 });
+	gm.setCell({ 500, 528 });
+	gm.setCell({ 500, 529 });
+	gm.setCell({ 500, 530 });
+	gm.setCell({ 500, 531 });
+	gm.setCell({ 500, 532 });
+	gm.setCell({ 500, 534 });
+	gm.setCell({ 500, 535 });
+	gm.setCell({ 500, 536 });
+	gm.setCell({ 500, 537 });
+	gm.setCell({ 500, 538 });
+
 }

@@ -19,11 +19,6 @@
 #define KERNEL_ARGS2(grid, block) <<<grid, block>>>
 #endif
 
-#define SCOPE(foo) #foo
-#define PROXY_SCOPE(bar) SCOPE(bar)
-#define ERROR_MSG (__FILE__ "\t line " PROXY_SCOPE(__LINE__))
-#define CHECK_K(func) checkK(func, ERROR_MSG)
-
 
 __host__ __device__ void set_range_change(int* c_min, int* c_max, const unsigned int coord, const unsigned int max_value)
 {
@@ -41,52 +36,14 @@ __host__ __device__ void set_range_change(int* c_min, int* c_max, const unsigned
 	}
 }
 
-void checkK(cudaError_t error, std::string message)
-{
-	if (error != cudaSuccess)
-	{
-		std::cout << message << ": " << cudaGetErrorString(error) << "\n";
-		throw - 1;
-	}
-}
-
-template<typename T>
-struct HostAllocator
-{
-	typedef T value_type;
-	T* allocate(size_t count)
-	{
-		T* tmp;
-		CHECK_K(cudaMallocHost(&tmp, count * sizeof(T)));
-		return tmp;
-	}
-	void deallocate(T* ptr, size_t count)
-	{
-		CHECK_K(cudaFreeHost(ptr));
-	}
-};
-
-
-
-Game::Game(unsigned int max_x, unsigned int max_y)
-	: max({ max_x, max_y })
-{
-	CHECK_K(cudaGetDeviceProperties(&current_device, 0));
-	CHECK_K(cudaMallocHost(&game_field, sizeof(bool) * max_x * max_y));
-}
-
-Game::~Game()
-{
-	CHECK_K(cudaFreeHost(game_field));
-}
-
-__global__ void ckeckCell(Coords* changed, Coords* check, unsigned int check_size, Coords max, bool* game_field)
+__global__ void checkCellCuda(Coords* changed, Coords* check, unsigned int check_size, Coords max, bool* game_field)
 {
 	int y_min, y_max;
 	int x_min, x_max;
 
 	//printf("gridDim.x: %d\nblockIdx.x: %d\nthreadIdx.x: %d\n\n\n", gridDim.x, blockIdx.x, threadIdx.x);
-	unsigned int global_idx = gridDim.x * blockIdx.x * blockDim.x + threadIdx.x;
+	unsigned int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
+	//printf("check_size: %u\t\tglobal_idx: %u\n", check_size, global_idx);
 
 	if (global_idx >= check_size) return;
 
@@ -113,10 +70,10 @@ __global__ void ckeckCell(Coords* changed, Coords* check, unsigned int check_siz
 
 	//printf("global_idx: %d\t Alive cells: %d\t (%d, %d)\n", global_idx, alive_cells, cell.x, cell.y);//del
 
-	
-	bool *cell_in_game_field = game_field + COORD(cell.x, cell.y, max.y);
+
+	bool* cell_in_game_field = game_field + COORD(cell.x, cell.y, max.y);
 	bool have_3_or_4_alive_cells = (3 == alive_cells || alive_cells == 4);
-	bool change_cage = *cell_in_game_field ^ have_3_or_4_alive_cells;
+	bool change_cage = *cell_in_game_field ^ (*cell_in_game_field ? have_3_or_4_alive_cells : 3 == alive_cells);
 
 	if (change_cage)
 	{
@@ -131,99 +88,8 @@ __global__ void ckeckCell(Coords* changed, Coords* check, unsigned int check_siz
 	}
 }
 
-void Game::tick()
+void checkCell(Coords* changed, Coords* check, unsigned int check_size, Coords max, bool* game_field, dim3 grid_size, dim3 block_size)
 {
-	std::vector<Coords, HostAllocator<Coords>> check(alive_cells.begin(), alive_cells.end());
-
-
-
-	for (auto& cell : alive_cells)
-	{
-		int y_min, y_max;
-		int x_min, x_max;
-
-		set_range_change(&y_min, &y_max, cell.y, max.y);
-		set_range_change(&x_min, &x_max, cell.x, max.x);
-		for (int tmp_y = y_min; tmp_y <= y_max; ++tmp_y)
-		{
-			for (int tmp_x = x_min; tmp_x <= x_max; ++tmp_x)
-			{
-				unsigned int x = cell.x + tmp_x;
-				unsigned int y = cell.y + tmp_y;
-
-				Coords tmp_cell{ x, y };
-				auto it = std::lower_bound(check.begin(), check.end(), tmp_cell);
-				 
-				if (!(*it == tmp_cell))
-				{
-					check.emplace(it, std::move(tmp_cell));
-				}
-			}
-		}
-	}
-
-	std::vector<Coords, HostAllocator<Coords>> changed;
-	changed.resize(check.size());
-
-	unsigned int size = check.size(), th = current_device.maxThreadsPerBlock;
-	dim3 block_size(size > th ? th : size);
-	dim3 grid_size(size / th + 1);
-
-	cudaEvent_t sync;
-	CHECK_K(cudaEventCreate(&sync));
-	CHECK_K(cudaEventRecord(sync, 0));
-	ckeckCell KERNEL_ARGS2(grid_size, block_size) (changed.data(), check.data(), check.size(), max, game_field);
-	CHECK_K(cudaEventSynchronize(sync));
-
-
-
-
-	for (unsigned i = 0; i < changed.size(); ++i)
-	{
-		auto cell = changed[i];
-		if (!(cell == Coords{ UINT_MAX, UINT_MAX }))
-		{
-			auto it = alive_cells.insert(cell);
-			bool debug = game_field[COORD(cell.x, cell.y, max.y)];
-			game_field[COORD(cell.x, cell.y, max.y)] = it.second;
-			if (!it.second)
-			{
-				alive_cells.erase(it.first);
-			}
-		}
-	}
-	//CHECK_K(cudaEventDestroy(sync));
-}
-
-void Game::setCell(Coords cell)
-{
-	bool* tmp = game_field + COORD(cell.x, cell.y, max.y);
-	if (*tmp)
-	{
-		alive_cells.erase(cell);
-	}
-	else
-	{
-		alive_cells.insert(cell);
-	}
-	*tmp = !*tmp;
-}
-
-const std::set<Coords>& Game::getAliveCells() const
-{
-	return alive_cells;
-}
-
-
-
-bool operator== (const Coords& lhs, const Coords& rhs)
-{
-	return lhs.x == rhs.x && lhs.y == rhs.y;
-}
-
-bool operator< (const Coords& lhs, const Coords& rhs)
-{
-	bool c = lhs.x < rhs.x;
-	if (c) return c;
-	return lhs.x == rhs.x ? lhs.y < rhs.y : false;
+	checkCellCuda KERNEL_ARGS2(grid_size, block_size) (changed, check, check_size, max, game_field);
+	cudaDeviceSynchronize();
 }

@@ -32,16 +32,14 @@ int main(int argc, char* argv[])
 		SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	sdl.initRenderer(-1, SDL_RENDERER_ACCELERATED);
 
-	Game gm(1000, 1000);
-	gm.setCell({ 0, 0 });
-	gm.setCell({ 0, 1 });
-	gm.setCell({ 1, 0 });
-	gm.setCell({ 2, 0 });
+	Game gm(10000, 10000);
+	setFirstGeneration(gm);
 
-	bool play = true;
+	bool play = false;
 	bool one_beat = false;
 	int speed = 33;
 	bool quit = false;
+	bool show_field = true;
 
 	while (!quit)
 	{
@@ -79,7 +77,7 @@ int main(int argc, char* argv[])
 					break;
 				case SDL_KEYDOWN:
 					{
-						keyDown(play, one_beat, speed, mEvent.key);
+						keyDown(play, one_beat, show_field, speed, mEvent.key);
 					}
 					break;
 				case SDL_QUIT:
@@ -94,8 +92,8 @@ int main(int argc, char* argv[])
 		SDL_Delay(speed);
 		oneBeat(gm, one_beat, play);
 
-
-		draw(sdl.getRenderer().get(), gm);
+		if(show_field)
+			draw(sdl.getRenderer().get(), gm);
 
 	}
 	
@@ -124,11 +122,37 @@ void draw(SDL_Renderer* rend, Game& gm)
 
 	SDL_SetRenderDrawColor(rend, 255, 0, 0, 255);
 
+	//std::vector<std::thread> threads;
+	//threads.reserve(std::thread::hardware_concurrency() - 2);
+	//
+	//auto alive_cells = gm.getAliveCells().alive_cells;
+	//auto draw_func = [&](int thread_id)
+	//{
+	//	int count_threads = threads.capacity();
+	//	int first = thread_id * alive_cells.size() / count_threads;
+	//	int last = thread_id + 1 == count_threads ? alive_cells.size() : first + alive_cells.size() / count_threads;
+	//	for (int i = first; i < last; ++i)
+	//	{
+	//		Coords _cell = alive_cells[i];
+	//		drawRect(rend, _cell.x, _cell.y);
+	//	}
+	//};
+	//
+	//for (int i = 0; i < threads.capacity(); ++i)
+	//{
+	//	threads.emplace_back(draw_func, i);
+	//}
+	//
+	//for (auto& thread : threads)
+	//{
+	//	thread.join();
+	//}
 
-	for (const auto& _cell : gm.getAliveCells())
+	for (auto _cell : gm.getAliveCells().alive_cells)
 	{
 		drawRect(rend, _cell.x, _cell.y);
 	}
+
 	SDL_RenderPresent(rend);
 }
 
