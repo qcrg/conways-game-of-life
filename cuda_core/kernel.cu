@@ -41,14 +41,11 @@ __global__ void checkCellCuda(Coords* changed, Coords* check, unsigned int check
 	int y_min, y_max;
 	int x_min, x_max;
 
-	//printf("gridDim.x: %d\nblockIdx.x: %d\nthreadIdx.x: %d\n\n\n", gridDim.x, blockIdx.x, threadIdx.x);
 	unsigned int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
-	//printf("check_size: %u\t\tglobal_idx: %u\n", check_size, global_idx);
 
 	if (global_idx >= check_size) return;
 
 	Coords cell = check[global_idx];
-	//printf("(%d, %d)\n", cell.x, cell.y);
 
 	set_range_change(&y_min, &y_max, cell.y, max.y);
 	set_range_change(&x_min, &x_max, cell.x, max.x);
@@ -61,15 +58,11 @@ __global__ void checkCellCuda(Coords* changed, Coords* check, unsigned int check
 			unsigned int x = cell.x + tmp_x;
 			unsigned int y = cell.y + tmp_y;
 			bool* cell_value = game_field + COORD(x, y, max.y);
-			//if(global_idx == 4)printf("global_idx(%u), (%u, %u): %s\n",global_idx, x, y, *cell_value ? "true" : "false");//del
 
 			if (*cell_value)
 				++alive_cells;
 		}
 	}
-
-	//printf("global_idx: %d\t Alive cells: %d\t (%d, %d)\n", global_idx, alive_cells, cell.x, cell.y);//del
-
 
 	bool* cell_in_game_field = game_field + COORD(cell.x, cell.y, max.y);
 	bool have_3_or_4_alive_cells = (3 == alive_cells || alive_cells == 4);
@@ -77,9 +70,6 @@ __global__ void checkCellCuda(Coords* changed, Coords* check, unsigned int check
 
 	if (change_cage)
 	{
-		//printf("global_idx: %d; (%u, %u); cell_in_game_field: %d; have_3_or_4_alive_cells: %d; change_cage: %d\n",
-		//	global_idx, cell.x, cell.y, *cell_in_game_field, have_3_or_4_alive_cells, change_cage);//del
-
 		changed[global_idx] = cell;
 	}
 	else
