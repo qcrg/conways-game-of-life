@@ -4,26 +4,38 @@
 #include <iostream>
 #include <algorithm>
 #include <ranges>
-#include <concurrent_vector.h>
 
-using namespace concurrency;
-
-const concurrent_unordered_set<Coords>& Game::getAliveCells() const
+const Game::SyncUnit Game::getAliveCells() const
 {
-	return alive_cells;
+	alive_cells.syncCache();
+	return { alive_cells.cache, std::lock_guard<std::mutex>(alive_cells.cache_mutex) };
+}
+
+void Game::Alive::syncCache() const
+{
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	std::thread([&]()
+		{
+			std::scoped_lock guard(cache_mutex, data_mutex);
+			if (data.size() > cache.capacity()) cache.reserve(data.size());
+			cache.resize(0);
+			std::copy(data.begin(), data.end(), std::back_inserter(cache));
+		}).detach();
 }
 
 void Game::setCell(Coords cell)
 {
 	bool* tmp = game_field + COORD(cell.x, cell.y, max.y);
+	std::scoped_lock guard(alive_cells.cache_mutex, alive_cells.data_mutex);
 	if (*tmp)
 	{
-		alive_cells.unsafe_erase(cell);
-		
+		alive_cells.data.erase(cell);
+		alive_cells.cache.erase(std::ranges::find(alive_cells.cache, cell));
 	}
 	else
 	{
-		alive_cells.insert(cell);
+		alive_cells.data.insert(cell);
+		alive_cells.cache.push_back(cell);
 	}
 	*tmp = !*tmp;
 }
@@ -51,11 +63,9 @@ void checkK(cudaError_t error, std::string message)
 
 void Game::tick()
 {
-	concurrent_vector<Coords, HostAllocator<Coords>> check;
-	check.resize(alive_cells.size());
-	std::copy(alive_cells.begin(), alive_cells.end(), check.begin());
+	std::vector<Coords, HostAllocator<Coords>> check(alive_cells.data.begin(), alive_cells.data.end());
 
-	for (auto& cell : alive_cells)
+	for (auto& cell : alive_cells.data)
 	{
 		int y_min, y_max;
 		int x_min, x_max;
@@ -88,19 +98,23 @@ void Game::tick()
 	dim3 block_size(size > th ? th : size);
 	dim3 grid_size(size / th + 1);
 
+
 	checkCell(changed.data(), check.data(), check.size(), max, game_field, grid_size, block_size);
+
+
+	std::scoped_lock<std::mutex> syn_gurds(alive_cells.data_mutex);
 
 	for (unsigned int i = 0; i < changed.size(); ++i)
 	{
 		auto cell = changed[i];
 		if (!(cell == Coords{ UINT_MAX, UINT_MAX }))
 		{
-			auto it = alive_cells.insert(cell);
+			auto it = alive_cells.data.insert(cell);
 			bool debug = game_field[COORD(cell.x, cell.y, max.y)];
 			game_field[COORD(cell.x, cell.y, max.y)] = it.second;
 			if (!it.second)
 			{
-				alive_cells.unsafe_erase(it.first);
+				alive_cells.data.erase(it.first);
 			}
 		}
 	}
