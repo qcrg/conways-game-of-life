@@ -153,6 +153,7 @@ void draw(SDL_Renderer* rend, Game& gm)
 		drawRect(rend, _cell.x, _cell.y);
 	}
 
+
 	SDL_RenderPresent(rend);
 }
 
