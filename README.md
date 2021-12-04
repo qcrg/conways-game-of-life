@@ -1,4 +1,4 @@
-# conways-game-of-life
+# John Conway's Game of Life
 
 Кривая реализация игры John Conway's Game of Life.
 
