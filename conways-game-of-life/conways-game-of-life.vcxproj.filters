@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="System">
+      <UniqueIdentifier>{cd0f8acf-9e79-4e5a-a5e5-2483c86504e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\M module">
+      <UniqueIdentifier>{e4dc04f3-20f7-4417-b9c2-42a666b3123d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\M module\headers">
+      <UniqueIdentifier>{822b935c-f774-45ab-94f5-f720d7b9cf34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\M module\source">
+      <UniqueIdentifier>{48298cfa-30e4-49b1-b460-0f6126cea152}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\C module">
+      <UniqueIdentifier>{4ef0c042-3dbc-46d4-a249-98d808889db0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\C module\source">
+      <UniqueIdentifier>{0184c63f-d10d-4889-abcb-3eccb204cd3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\C module\headers">
+      <UniqueIdentifier>{ca6ef86e-ceec-454b-9a3f-1e2519cffb9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\V module">
+      <UniqueIdentifier>{8ef6f709-c196-49f3-9d9e-401681f4572d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\V module\headers">
+      <UniqueIdentifier>{e91e7750-2f72-4670-924c-06f2fc843b15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System\V module\source">
+      <UniqueIdentifier>{3bf70b74-e60e-4d48-8314-9c6a764ea37f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ModuleM.h">
+      <Filter>System\M module\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleV.h">
+      <Filter>System\V module\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleC.cuh">
+      <Filter>System\C module\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="constants.h">
+      <Filter>System\M module\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_types.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="defines.h">
+      <Filter>System</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ModuleM.cpp">
+      <Filter>System\M module\source</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleV.cpp">
+      <Filter>System\V module\source</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Game.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="ModuleC.cu">
+      <Filter>System\C module\source</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>
