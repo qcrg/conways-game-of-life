@@ -97,7 +97,7 @@ void GameTicker::runOneStep()
 {
 	std::vector<Point, HostAllocator<Point>> check(data.aliveCells.begin(), data.aliveCells.end());
 
-	for (auto& cell : data.aliveCells) // optimize with fibers
+	for (auto& cell : data.aliveCells) // optimize with multithreading
 	{
 		int64_t x_min, x_max;
 		int64_t y_min, y_max;
@@ -138,7 +138,7 @@ void GameTicker::runOneStep()
 
 	cuCHECK(cudaDeviceSynchronize());
 
-	for (auto& point : changed) //optimize with fibers
+	for (auto& point : changed) //optimize with multithreading
 	{
 		if (!(point == Point{ -1, -1 }))
 			data.changeCell(std::move(point));
