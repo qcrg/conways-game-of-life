@@ -1,5 +1,7 @@
-# Кривая реализация игры John Conway's Game of Life.
+# Implementation of John Conway's Game of Life
 
-R = play/stop.
-
-D = one step.
+### Building
+```bash
+cd conways-game-of-life
+cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/ -S./ && cmake --build build/
+```
