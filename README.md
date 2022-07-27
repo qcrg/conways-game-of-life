@@ -2,5 +2,5 @@
 
 ### Building
 ```bash
-cd conways-game-of-life && cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/ -S./ && cmake --build build/
+cd conways-game-of-life && cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/ -S./ && cmake --build build/ -j8
 ```
