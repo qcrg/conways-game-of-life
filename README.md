@@ -15,11 +15,13 @@ cd conways-game-of-life && cmake -DDISPLAY_TYPE=curses -DCMAKE_BUILD_TYPE=Releas
 - curses
 ```
 h - left
-j - up
-k - down
+j - down
+k - up
 l - right
 p - play/pause
 o - one step
+- - decrease speed
+= (+) - increase speed
 ```
 - sdl (not implemented)
 ```

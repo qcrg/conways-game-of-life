@@ -23,7 +23,7 @@ namespace pnd::gol
         t.set_speed(int());
         t.change_cell(Point());
         std::is_same_v<sigc::signal<void(Alives)>,
-            decltype(t.tick_ended)>;
+            decltype(t.field_changed)>;
     };
 
     template<FieldConc F>
@@ -32,7 +32,7 @@ namespace pnd::gol
         using FieldType = F;
 
         FieldType field;
-        int tps;
+        unsigned int tps;
         std::atomic<bool> is_play, is_one_step, quit_from_loop;
         std::mutex mutex;
         std::thread thread;
@@ -49,10 +49,11 @@ namespace pnd::gol
         void play();
         void pause();
         void one_step();
-        void set_speed(int ticks_per_second);
+        void set_speed(unsigned int ticks_per_second);
+        unsigned int get_speed() const;
         void change_cell(const Point &point);
 
-        sigc::signal<void(const Alives &)> tick_ended;
+        sigc::signal<void(const Alives &)> field_changed;
 
     };
 
@@ -124,9 +125,15 @@ namespace pnd::gol
     }
 
     template<FieldConc F>
-    void EngineBasic<F>::set_speed(int tps)
+    void EngineBasic<F>::set_speed(unsigned int tps)
     {
-        this->speed = tps;
+        this->tps = tps;
+    }
+
+    template<FieldConc F>
+    unsigned int EngineBasic<F>::get_speed() const
+    {
+        return tps;
     }
 
     template<FieldConc F>
@@ -134,6 +141,7 @@ namespace pnd::gol
     {
         std::scoped_lock<std::mutex> lock(mutex);
         field.change(point);
+        field_changed.emit(field.get_alives());
     }
 
     template<FieldConc F>
@@ -148,11 +156,9 @@ namespace pnd::gol
                 for (int j = -1; j < 2; j++)
                     if (field.is_alive({p.x + i, p.y + j}))
                         alive_count++;
-            bool b = alive_count == 3 || alive_count == 4;
-            return field.is_alive(p) ? !b : b;
-            //bool a = field.is_alive(p),
-                 //b = alive_count == 3 || alive_count == 4;
-            //return (a || b) && (!a || b);
+            return field.is_alive(p) ?
+                !(alive_count == 3 || alive_count == 4) :
+                alive_count == 3;
         };
         std::scoped_lock lock(mutex);
         for (const auto &p : alive)
@@ -164,7 +170,7 @@ namespace pnd::gol
         }
         for (const auto &p : for_change)
             field.change(p);
-        tick_ended.emit(field.get_alives());
+        field_changed.emit(field.get_alives());
     }
 
     using Engine = EngineBasic<Field>;
