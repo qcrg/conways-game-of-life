@@ -74,14 +74,15 @@ namespace pnd::gol
     template<EngineConc E>
     void WindowBasic<E>::render()
     {
-        //FIXME
         std::scoped_lock<std::mutex> lock(mutex);
         int term_x, term_y;
         getmaxyx(wnd, term_y, term_x);
         for (int i = offset_x; i < offset_x + term_x; i++)
             for (int j = offset_y; j < offset_y + term_y; j++)
                 if (alives.contains({i, j}))
-                    mvwaddch(wnd, j - offset_y, i - offset_x, alive_char_present);
+                    mvwaddch(wnd,
+                            j - offset_y, i - offset_x,
+                            alive_char_present);
     }
 
     template<EngineConc E>
