@@ -2,7 +2,9 @@
 
 ### Building
 ```bash
-cd conways-game-of-life && cmake -DDISPLAY_TYPE=curses -DCMAKE_BUILD_TYPE=Release -Bbuild/ -S./ && cmake --build build/ -j8
+cd conways-game-of-life
+export WINDOW_TYPE=curses
+cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/ -S./ && cmake --build build/ -j8
 ```
 
 ### Dislpay Types
