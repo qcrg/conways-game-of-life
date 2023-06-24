@@ -14,7 +14,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/ -S./ && cmake --build build/ -j8
 - qt (not implemented)
 
 ### Controls
-- curses
+- Common
 ```
 h - left
 j - down
@@ -25,8 +25,17 @@ o - one step
 - - decrease speed
 = (+) - increase speed
 ```
+- curses
+```
+i - insert mode
+space - change cell in insert mode
+ESC - escape from insert mode
+```
 - sdl (not implemented)
 ```
+middle button + mouse motion - screen movement
+left button - change cell
+mouse wheel - zoom
 ```
 - gtk (not implemented)
 ```
