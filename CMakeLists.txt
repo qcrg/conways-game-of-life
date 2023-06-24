@@ -3,9 +3,19 @@ project(conways_game_of_life)
 
 ### default
 set(WINDOW_TYPE $ENV{WINDOW_TYPE})
+string(TOLOWER "${WINDOW_TYPE}" WINDOW_TYPE)
 if ("${WINDOW_TYPE}" STREQUAL "")
     set(WINDOW_TYPE "curses")
 endif ()
+
+if ("${BUILD_TYPE}" STREQUAL "")
+    set(BUILD_TYPE "Debug")
+endif()
+
+### sdl debug output
+if ("${BUILD_TYPE}" STREQUAL "Debug")
+    set(SDL_DEBUG 1)
+endif()
 
 ### general source
 file(GLOB_RECURSE SRC_LIST src/*.cxx)
@@ -30,9 +40,19 @@ if ("${WINDOW_TYPE}" STREQUAL "curses") ### curses
     include_directories(${CURSES_INCLUDE_DIRS})
     list(APPEND LIBS_LIST ${CURSES_LIBRARIES})
 elseif ("${WINDOW_TYPE}" STREQUAL "sdl") ### SDL
+    ### SDL2
     find_package(SDL2 REQUIRED)
     include_directories(${SDL2_INCLUDE_DIRS})
     list(APPEND LIBS_LIST ${SDL2_LIBRARIES})
+
+    ### SDL2_ttf
+    pkg_check_modules(TTF REQUIRED SDL2_ttf)
+    include_directories(${TTF_INCLUDE_DIRS})
+    list(APPEND LIBS_LIST ${TTF_LIBRARIES})
+    if ("${BUILD_TYPE}" STREQUAL "Debug" AND
+            ${SDL_DEBUG})
+        add_compile_options(-DPND_SDL_DEBUG)
+    endif()
 elseif ("${WINDOW_TYPE}" STREQUAL "gtk") ### GTK
     pkg_check_modules(GTK REQUIRED gtkmm-4.0)
     include_directories(${GTK_INCLUDE_DIRS})
@@ -42,7 +62,7 @@ elseif ("${WINDOW_TYPE}" STREQUAL "qt") ### QT
     include_directories(${QT_INCLUDE_DIRS})
     list(APPEND LIBS_LIST ${QT_LIBRARIES})
 else ()
-    message(FATAL_ERROR "Display type is undefined")
+    message(FATAL_ERROR "Window type is undefined [${WINDOW_TYPE}]: curses, sdl, gtk, or qt")
 endif ()
 add_display_src(${WINDOW_TYPE})
 
