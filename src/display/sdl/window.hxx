@@ -4,6 +4,8 @@
 #include "color.hxx"
 #include "sdl.hxx"
 
+#include "debug/sdl_debug_output.hxx"
+
 #include <thread>
 #include <mutex>
 #include <shared_mutex>
@@ -20,6 +22,7 @@ namespace pnd::gol
     class WindowBasic
     {
         using ThisType = WindowBasic<E>;
+
         std::jthread thread;
         //std::mutex mutex;
         const Alives *alives;
@@ -34,9 +37,21 @@ namespace pnd::gol
             float offset_y{0};
             int size{10};
         } ctx;
-
         SdlWindowRef wnd;
         SdlRendererRef rndr;
+        SdlDebugOutput debug_output;
+        struct {
+            float real_x_offset_diff;
+            float real_y_offset_diff;
+            int x_offset_diff;
+            int y_offset_diff;
+            float real_cur_x_idx;
+            float real_cur_y_idx;
+            int cur_x_idx;
+            int cur_y_idx;
+            int x_output_idx;
+            int y_output_idx;
+        } debug_ctx;
 
         void on_tick_ended(const Alives &alives);
         void process_thread(std::stop_token token);
@@ -47,7 +62,10 @@ namespace pnd::gol
         void process_input(SDL_MouseButtonEvent &event);
         void process_input(SDL_MouseWheelEvent &event);
         void process_input(SDL_KeyboardEvent &event);
-        
+
+        Point get_mouse_idx(const Point &mouse_pos);
+
+        void add_debug_output();
     public:
         using EngineType = E;
 
@@ -76,19 +94,16 @@ namespace pnd::gol
     template<EngineConc E>
     void WindowBasic<E>::process_thread(std::stop_token token)
     {
-        wnd = SdlWindow::create();
+        wnd = SdlWindow::create("Conway's Game of Life");
         rndr = SdlRenderer::create(wnd);
+        debug_output = SdlDebugOutput(rndr);
+        add_debug_output();
         while (!token.stop_requested())
         {
             process_input();
             render();
         }
     }
-
-    //template<EngineConc E>
-    //void WindowBasic<E>::process()
-    //{
-    //}
 
     template<EngineConc E>
     void WindowBasic<E>::process_input()
@@ -131,6 +146,16 @@ namespace pnd::gol
             ctx.offset_x -= event.xrel * ctx.offset_mult / ctx.size;
             ctx.offset_y -= event.yrel * ctx.offset_mult / ctx.size;
         }
+
+#ifdef PND_SDL_DEBUG
+        float x = event.x / (float)ctx.size + ctx.offset_x,
+            y = event.y / (float)ctx.size + ctx.offset_y;
+        debug_ctx.real_cur_x_idx = x < 0 ? x - 1 : x;
+        debug_ctx.real_cur_y_idx = y < 0 ? y - 1 : y;
+        auto cur_idx = get_mouse_idx({event.x, event.y});
+        debug_ctx.cur_x_idx = cur_idx.x;
+        debug_ctx.cur_y_idx = cur_idx.y;
+#endif //ifdef PND_SDL_DEBUG
     }
 
     template<EngineConc E>
@@ -145,15 +170,7 @@ namespace pnd::gol
             case SDL_BUTTON_LEFT:
                 if (!ctx.middle_mouse_pressed &&
                         event.type == SDL_MOUSEBUTTONDOWN)
-                {
-                    float x = event.x / ctx.size + ctx.offset_x,
-                        y = event.y / ctx.size + ctx.offset_y;
-
-                    engine.change_cell({
-                            static_cast<int>(std::round(x)),
-                            static_cast<int>(std::round(y))
-                            });
-                }
+                    engine.change_cell(get_mouse_idx({event.x, event.y}));
             break;
         }
     }
@@ -163,16 +180,40 @@ namespace pnd::gol
     {
         if (!ctx.middle_mouse_pressed)
         {
-            auto old_size = ctx.size;
+            int old_size = ctx.size;
             ctx.size = std::clamp(ctx.size + event.y * ctx.size_diff,
                     ctx.size_min,
                     ctx.size_max);
+            //FIXME change offset with new size
             if (old_size != ctx.size)
             {
-                ctx.offset_x -= event.y * ctx.size_diff;
-                ctx.offset_y -= event.y * ctx.size_diff;
+                int mx, my;
+                SDL_GetMouseState(&mx, &my);
+                float sign = -event.y / std::abs(event.y);
+
+
+
+                debug_ctx.real_x_offset_diff = 0;
+                debug_ctx.real_y_offset_diff = 0;
+                debug_ctx.x_offset_diff = 0;
+                debug_ctx.y_offset_diff = 0;
+                //float mul = ctx.size / static_cast<float>(old_size);
+                //auto x_diff = sign * mx / ctx.size / mul,
+                     //y_diff = sign * my / ctx.size / mul;
+                
+                //std::clog << std::format(
+                        //"offset_x {} offset_y {}\nx diff {} y diff {}",
+                        //ctx.offset_x, ctx.offset_y,
+                        //x_diff, y_diff)
+                    //<< std::endl;
+
+                //ctx.offset_x += x_diff;
+                //ctx.offset_y += y_diff;
+                //std::clog << std::format(
+                        //"offset_x {} offset_y {}\n",
+                        //ctx.offset_x, ctx.offset_y)
+                    //<< std::endl;
             }
-            //FIXME change offset with new size
         }
     }
 
@@ -261,6 +302,7 @@ namespace pnd::gol
                 }
             }
 
+        debug_output.render();
         this->rndr->present();
     }
 
@@ -269,6 +311,62 @@ namespace pnd::gol
     {
         //std::scoped_lock<std::mutex> lock(mutex);
         this->alives = &alives;
+    }
+
+    template<EngineConc E>
+    Point WindowBasic<E>::get_mouse_idx(const Point &mouse_pos)
+    {
+        float x = mouse_pos.x / (float)ctx.size + ctx.offset_x,
+            y = mouse_pos.y / (float)ctx.size + ctx.offset_y;
+
+        return {
+            static_cast<int>(x < 0 ? x - 1 : x),
+            static_cast<int>(y < 0 ? y - 1 : y)
+        };
+    }
+
+    template<EngineConc E>
+    void WindowBasic<E>::add_debug_output()
+    {
+        std::initializer_list<DebugLineCreator> list = {
+            [&](){
+                return std::format("Size: {}", ctx.size);
+            },
+            [&]() {
+                return std::format("Offset (X, Y): ({}, {})",
+                    ctx.offset_x,
+                    ctx.offset_y
+                );
+            },
+            []() {
+                int x, y;
+                uint32_t state = SDL_GetMouseState(&x, &y);
+                return std::format("Mouse (X, Y): ({}, {})\n"
+                    "Mouse (L,M,R): ({},{},{})",
+                    x, y,
+                    (int)static_cast<bool>(SDL_BUTTON(1) & state),
+                    (int)static_cast<bool>(SDL_BUTTON(2) & state),
+                    (int)static_cast<bool>(SDL_BUTTON(3) & state)
+                );
+            },
+            [&]() {
+                int x, y;
+                SDL_GetMouseState(&x, &y);
+                return std::format(
+                    "Last real offset diff (X, Y): ({}, {})\n"
+                    "Last offset diff (X, Y): ({}, {})\n"
+                    "Real current index (X, Y): ({}, {})\n"
+                    "Current mouse index (X, Y): ({}, {})\n"
+                    "Output index (X, Y): ({}, {})\n",
+                    debug_ctx.real_x_offset_diff, debug_ctx.real_y_offset_diff,
+                    debug_ctx.x_offset_diff, debug_ctx.y_offset_diff,
+                    debug_ctx.real_cur_x_idx, debug_ctx.real_cur_y_idx,
+                    debug_ctx.cur_x_idx, debug_ctx.cur_y_idx,
+                    debug_ctx.x_output_idx, debug_ctx.y_output_idx
+                );
+            }
+        };
+        debug_output.add_lines(list);
     }
 
     using Window = WindowBasic<Engine>;

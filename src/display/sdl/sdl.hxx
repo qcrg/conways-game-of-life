@@ -13,7 +13,7 @@ namespace pnd::gol
     template<class T>
     struct SizeBasic
     {
-        T w, h;
+        T w, h, &x{w}, &y{h};
     };
     using Size = SizeBasic<int>;
 
@@ -28,6 +28,21 @@ namespace pnd::gol
         static int init();
         static void deinit();
     };
+
+    class SdlSurface
+    {
+        SDL_Surface *surface;
+
+        SdlSurface(SDL_Surface *surf);
+    public:
+        using Ref = std::shared_ptr<SdlSurface>;
+        static Ref create(SDL_Surface *surf);
+        ~SdlSurface();
+
+        SDL_Surface *get_low_level();
+    };
+
+    using SdlSurfaceRef = SdlSurface::Ref;
 
     class SdlWindow
     {
@@ -54,6 +69,8 @@ namespace pnd::gol
 
     using SdlWindowRef = SdlWindow::Ref;
 
+    struct SdlTexture;
+
     class SdlRenderer
     {
         SdlWindowRef wnd;
@@ -72,6 +89,7 @@ namespace pnd::gol
 
         void set_bg_color(Color color);
         void set_fg_color(Color color);
+        void render_copy(const std::shared_ptr<SdlTexture> &texture);
         void present();
         void clear();
 
@@ -79,4 +97,20 @@ namespace pnd::gol
     };
 
     using SdlRendererRef = SdlRenderer::Ref;
+
+    class SdlTexture
+    {
+        SDL_Texture *texture;
+        SdlTexture(const SdlRendererRef &rndr, const SdlSurfaceRef &surf);
+    public:
+        using Ref = std::shared_ptr<SdlTexture>;
+        static Ref create(const SdlRendererRef &rndr,
+                const SdlSurfaceRef &surf);
+        ~SdlTexture();
+        Size get_size() const;
+
+        SDL_Texture *get_low_level();
+    };
+
+    using SdlTextureRef = SdlTexture::Ref;
 } //namespace pnd::gol

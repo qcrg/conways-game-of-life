@@ -13,4 +13,9 @@ namespace pnd::gol
         };
         return DEFS[static_cast<int>(color)];
     }
+
+    Color::operator SDL_Color() const
+    {
+        return SDL_Color{r, g, b, a};
+    }
 } //namespace pnd::gol

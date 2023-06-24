@@ -16,6 +16,57 @@ namespace pnd::gol
 
     std::atomic<int> Sdl::count = 0;
 
+    SdlSurface::SdlSurface(SDL_Surface *surf)
+        : surface{surf}
+    {}
+
+    SdlSurface::~SdlSurface()
+    {
+        SDL_FreeSurface(surface);
+    }
+
+    SDL_Surface *SdlSurface::get_low_level()
+    {
+        return surface;
+    }
+
+    SdlTexture::SdlTexture(const SdlRendererRef &rndr, const SdlSurfaceRef &surf)
+    {
+        texture = SDL_CreateTextureFromSurface(rndr->get_low_level(),
+                surf->get_low_level());
+        if (!texture)
+            throw get_sdl_error("SdlTexture()");
+    }
+
+    SdlTextureRef SdlTexture::create(const SdlRendererRef &rndr,
+            const SdlSurfaceRef &surf)
+    {
+        return SdlTextureRef(new SdlTexture(rndr, surf));
+    }
+
+    Size SdlTexture::get_size() const
+    {
+        Size res;
+        if (SDL_QueryTexture(texture, nullptr, nullptr, &res.w, &res.h))
+            throw get_sdl_error(__func__);
+        return res;
+    }
+
+    SdlSurfaceRef SdlSurface::create(SDL_Surface *surf)
+    {
+        return SdlSurfaceRef(new SdlSurface(surf));
+    }
+
+    SdlTexture::~SdlTexture()
+    {
+        SDL_DestroyTexture(texture);
+    }
+
+    SDL_Texture *SdlTexture::get_low_level()
+    {
+        return texture;
+    }
+
     Sdl::Sdl()
     {
         if (init())
@@ -136,5 +187,13 @@ namespace pnd::gol
         set_draw_color(bg_color);
         SDL_RenderClear(rndr);
         set_draw_color(fg_color);
+    }
+    
+    void SdlRenderer::render_copy(const SdlTextureRef &texture)
+    {
+        Size size = texture->get_size();
+        SDL_Rect rect = {0, 0, size.w, size.h};
+        if (SDL_RenderCopy(rndr, texture->get_low_level(), nullptr, &rect))
+            throw get_sdl_error(__func__);
     }
 } //namespace pnd::gol
