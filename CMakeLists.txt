@@ -50,7 +50,7 @@ elseif ("${WINDOW_TYPE}" STREQUAL "sdl") ### SDL
     include_directories(${TTF_INCLUDE_DIRS})
     list(APPEND LIBS_LIST ${TTF_LIBRARIES})
     if ("${BUILD_TYPE}" STREQUAL "Debug" AND
-            ${SDL_DEBUG})
+            "${SDL_DEBUG}")
         add_compile_options(-DPND_SDL_DEBUG)
     endif()
 elseif ("${WINDOW_TYPE}" STREQUAL "gtk") ### GTK
