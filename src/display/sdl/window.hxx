@@ -41,16 +41,10 @@ namespace pnd::gol
         SdlRendererRef rndr;
         SdlDebugOutput debug_output;
         struct {
-            float real_x_offset_diff;
-            float real_y_offset_diff;
-            int x_offset_diff;
-            int y_offset_diff;
             float real_cur_x_idx;
             float real_cur_y_idx;
             int cur_x_idx;
             int cur_y_idx;
-            int x_output_idx;
-            int y_output_idx;
         } debug_ctx;
 
         void on_tick_ended(const Alives &alives);
@@ -63,6 +57,7 @@ namespace pnd::gol
         void process_input(SDL_MouseWheelEvent &event);
         void process_input(SDL_KeyboardEvent &event);
 
+        std::pair<float, float> get_mouse_idx_float(const Point &mouse_pos);
         Point get_mouse_idx(const Point &mouse_pos);
 
         void add_debug_output();
@@ -180,39 +175,20 @@ namespace pnd::gol
     {
         if (!ctx.middle_mouse_pressed)
         {
+            int mx, my;
+            SDL_GetMouseState(&mx, &my);
+            std::pair<float, float> old_idx = get_mouse_idx_float({mx, my});
             int old_size = ctx.size;
             ctx.size = std::clamp(ctx.size + event.y * ctx.size_diff,
                     ctx.size_min,
                     ctx.size_max);
+            std::pair<float, float> new_idx = get_mouse_idx_float({mx, my});
             //FIXME change offset with new size
             if (old_size != ctx.size)
             {
-                int mx, my;
-                SDL_GetMouseState(&mx, &my);
                 float sign = -event.y / std::abs(event.y);
-
-
-
-                debug_ctx.real_x_offset_diff = 0;
-                debug_ctx.real_y_offset_diff = 0;
-                debug_ctx.x_offset_diff = 0;
-                debug_ctx.y_offset_diff = 0;
-                //float mul = ctx.size / static_cast<float>(old_size);
-                //auto x_diff = sign * mx / ctx.size / mul,
-                     //y_diff = sign * my / ctx.size / mul;
-                
-                //std::clog << std::format(
-                        //"offset_x {} offset_y {}\nx diff {} y diff {}",
-                        //ctx.offset_x, ctx.offset_y,
-                        //x_diff, y_diff)
-                    //<< std::endl;
-
-                //ctx.offset_x += x_diff;
-                //ctx.offset_y += y_diff;
-                //std::clog << std::format(
-                        //"offset_x {} offset_y {}\n",
-                        //ctx.offset_x, ctx.offset_y)
-                    //<< std::endl;
+                ctx.offset_x += (old_idx.first - new_idx.first);
+                ctx.offset_y += (old_idx.second - new_idx.second);
             }
         }
     }
@@ -280,8 +256,10 @@ namespace pnd::gol
         auto lrndr = rndr->get_low_level();
         auto size = wnd->get_size();
         //std::scoped_lock<std::mutex> lock(mutex);
-        for (int i = ctx.offset_x; i < size.w / ctx.size + ctx.offset_x; i++)
-            for (int j = ctx.offset_y;
+        for (int i = ctx.offset_x - 1;
+                i < size.w / ctx.size + ctx.offset_x;
+                i++)
+            for (int j = ctx.offset_y - 1;
                     j < size.h / ctx.size + ctx.offset_y;
                     j++)
             {
@@ -314,11 +292,20 @@ namespace pnd::gol
     }
 
     template<EngineConc E>
-    Point WindowBasic<E>::get_mouse_idx(const Point &mouse_pos)
+    std::pair<float, float>
+    WindowBasic<E>::get_mouse_idx_float(const Point &mouse_pos)
     {
         float x = mouse_pos.x / (float)ctx.size + ctx.offset_x,
             y = mouse_pos.y / (float)ctx.size + ctx.offset_y;
+        return {x, y};
+    }
 
+    template<EngineConc E>
+    Point WindowBasic<E>::get_mouse_idx(const Point &mouse_pos)
+    {
+        auto pos = get_mouse_idx_float(mouse_pos);
+        float x = pos.first,
+              y = pos.second;
         return {
             static_cast<int>(x < 0 ? x - 1 : x),
             static_cast<int>(y < 0 ? y - 1 : y)
@@ -353,16 +340,10 @@ namespace pnd::gol
                 int x, y;
                 SDL_GetMouseState(&x, &y);
                 return std::format(
-                    "Last real offset diff (X, Y): ({}, {})\n"
-                    "Last offset diff (X, Y): ({}, {})\n"
                     "Real current index (X, Y): ({}, {})\n"
                     "Current mouse index (X, Y): ({}, {})\n"
-                    "Output index (X, Y): ({}, {})\n",
-                    debug_ctx.real_x_offset_diff, debug_ctx.real_y_offset_diff,
-                    debug_ctx.x_offset_diff, debug_ctx.y_offset_diff,
                     debug_ctx.real_cur_x_idx, debug_ctx.real_cur_y_idx,
                     debug_ctx.cur_x_idx, debug_ctx.cur_y_idx,
-                    debug_ctx.x_output_idx, debug_ctx.y_output_idx
                 );
             }
         };
