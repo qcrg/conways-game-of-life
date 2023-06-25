@@ -13,8 +13,7 @@
 #include <sigc++/sigc++.h>
 #include <algorithm>
 
-#include <iostream> //FIXME
-#include <format>   //FIXME
+#include <format>
 
 namespace pnd::gol
 {
@@ -24,8 +23,6 @@ namespace pnd::gol
         using ThisType = WindowBasic<E>;
 
         std::jthread thread;
-        //std::mutex mutex;
-        const Alives *alives;
         E &engine;
         struct {
             const int size_min = 4;
@@ -47,7 +44,6 @@ namespace pnd::gol
             int cur_y_idx;
         } debug_ctx;
 
-        void on_tick_ended(const Alives &alives);
         void process_thread(std::stop_token token);
         void render();
         void process_input();
@@ -57,8 +53,8 @@ namespace pnd::gol
         void process_input(SDL_MouseWheelEvent &event);
         void process_input(SDL_KeyboardEvent &event);
 
-        std::pair<float, float> get_mouse_idx_float(const Point &mouse_pos);
-        Point get_mouse_idx(const Point &mouse_pos);
+        std::pair<float, float> get_mouse_idx_float(int mouse_x, int mouse_y);
+        Point get_mouse_idx(int mouse_x, int mouse_y);
 
         void add_debug_output();
     public:
@@ -72,8 +68,6 @@ namespace pnd::gol
     WindowBasic<E>::WindowBasic(E &engine)
         : engine{engine}
     {
-        engine.field_changed.connect(
-                sigc::mem_fun(*this, &ThisType::on_tick_ended));
         thread = std::jthread(std::bind(&ThisType::process_thread,
                     this,
                     std::placeholders::_1));
@@ -147,7 +141,7 @@ namespace pnd::gol
             y = event.y / (float)ctx.size + ctx.offset_y;
         debug_ctx.real_cur_x_idx = x < 0 ? x - 1 : x;
         debug_ctx.real_cur_y_idx = y < 0 ? y - 1 : y;
-        auto cur_idx = get_mouse_idx({event.x, event.y});
+        auto cur_idx = get_mouse_idx(event.x, event.y);
         debug_ctx.cur_x_idx = cur_idx.x;
         debug_ctx.cur_y_idx = cur_idx.y;
 #endif //ifdef PND_SDL_DEBUG
@@ -165,7 +159,7 @@ namespace pnd::gol
             case SDL_BUTTON_LEFT:
                 if (!ctx.middle_mouse_pressed &&
                         event.type == SDL_MOUSEBUTTONDOWN)
-                    engine.change_cell(get_mouse_idx({event.x, event.y}));
+                    engine.change_cell(get_mouse_idx(event.x, event.y));
             break;
         }
     }
@@ -177,16 +171,14 @@ namespace pnd::gol
         {
             int mx, my;
             SDL_GetMouseState(&mx, &my);
-            std::pair<float, float> old_idx = get_mouse_idx_float({mx, my});
+            std::pair<float, float> old_idx = get_mouse_idx_float(mx, my);
             int old_size = ctx.size;
             ctx.size = std::clamp(ctx.size + event.y * ctx.size_diff,
                     ctx.size_min,
                     ctx.size_max);
-            std::pair<float, float> new_idx = get_mouse_idx_float({mx, my});
-            //FIXME change offset with new size
+            std::pair<float, float> new_idx = get_mouse_idx_float(mx, my);
             if (old_size != ctx.size)
             {
-                float sign = -event.y / std::abs(event.y);
                 ctx.offset_x += (old_idx.first - new_idx.first);
                 ctx.offset_y += (old_idx.second - new_idx.second);
             }
@@ -263,7 +255,8 @@ namespace pnd::gol
                     j < size.h / ctx.size + ctx.offset_y;
                     j++)
             {
-                if (alives->contains({i, j}))
+                if (engine.get_field().is_alive({static_cast<dim_t>(i),
+                            static_cast<dim_t>(j)}))
                 {
                     float bord = std::round(ctx.size / 10),
                         x_idx = i - ctx.offset_x,
@@ -285,30 +278,23 @@ namespace pnd::gol
     }
 
     template<EngineConc E>
-    void WindowBasic<E>::on_tick_ended(const Alives &alives)
-    {
-        //std::scoped_lock<std::mutex> lock(mutex);
-        this->alives = &alives;
-    }
-
-    template<EngineConc E>
     std::pair<float, float>
-    WindowBasic<E>::get_mouse_idx_float(const Point &mouse_pos)
+    WindowBasic<E>::get_mouse_idx_float(int mouse_x, int mouse_y)
     {
-        float x = mouse_pos.x / (float)ctx.size + ctx.offset_x,
-            y = mouse_pos.y / (float)ctx.size + ctx.offset_y;
+        float x = mouse_x / (float)ctx.size + ctx.offset_x,
+            y = mouse_y / (float)ctx.size + ctx.offset_y;
         return {x, y};
     }
 
     template<EngineConc E>
-    Point WindowBasic<E>::get_mouse_idx(const Point &mouse_pos)
+    Point WindowBasic<E>::get_mouse_idx(int mouse_x, int mouse_y)
     {
-        auto pos = get_mouse_idx_float(mouse_pos);
+        auto pos = get_mouse_idx_float(mouse_x, mouse_y);
         float x = pos.first,
               y = pos.second;
         return {
-            static_cast<int>(x < 0 ? x - 1 : x),
-            static_cast<int>(y < 0 ? y - 1 : y)
+            static_cast<dim_t>(x < 0 ? x - 1 : x),
+            static_cast<dim_t>(y < 0 ? y - 1 : y)
         };
     }
 
@@ -341,9 +327,9 @@ namespace pnd::gol
                 SDL_GetMouseState(&x, &y);
                 return std::format(
                     "Real current index (X, Y): ({}, {})\n"
-                    "Current mouse index (X, Y): ({}, {})\n"
+                    "Current mouse index (X, Y): ({}, {})\n",
                     debug_ctx.real_cur_x_idx, debug_ctx.real_cur_y_idx,
-                    debug_ctx.cur_x_idx, debug_ctx.cur_y_idx,
+                    debug_ctx.cur_x_idx, debug_ctx.cur_y_idx
                 );
             }
         };
