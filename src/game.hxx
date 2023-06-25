@@ -14,7 +14,8 @@ namespace pnd::gol
 
     template
     <
-        FieldConc F = Field,
+        AliveConc A = Alive,
+        FieldConc F = FieldBasic<A>,
         EngineConc E = EngineBasic<F>,
         DisplayConc D = WindowBasic<E>
     >
@@ -24,6 +25,7 @@ namespace pnd::gol
         D display;
 
     public:
+        using AliveType = A;
         using FieldType = F;
         using EngineType = E;
         using DisplayType = D;
@@ -32,11 +34,11 @@ namespace pnd::gol
 
     };
 
-    template<FieldConc F, EngineConc E, DisplayConc D>
-    GameBasic<F, E, D>::GameBasic()
+    template<AliveConc A, FieldConc F, EngineConc E, DisplayConc D>
+    GameBasic<A, F, E, D>::GameBasic()
         : display{engine}
     {
-        //FIXME
+        //FIXME delete change cells
         engine.change_cell({0, 0});
         engine.change_cell({0, 1});
         engine.change_cell({1, 0});
@@ -48,6 +50,6 @@ namespace pnd::gol
         engine.run();
     }
 
-    using Game = GameBasic<Field, Engine, Window>;
+    using Game = GameBasic<Alive, Field, Engine, Window>;
 
 } //namespace pnd::gol

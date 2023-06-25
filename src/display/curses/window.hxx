@@ -20,10 +20,8 @@ namespace pnd::gol
         WINDOW *wnd;
         std::jthread thread;
         std::mutex mutex;
-        Alives alives;
         E &engine;
 
-        void on_tick_ended(const Alives &alives);
         void process_input();
         void process_thread(std::stop_token token);
         void render();
@@ -50,8 +48,6 @@ namespace pnd::gol
         noecho();
         timeout(10);
         curs_set(0);
-        engine.field_changed.connect(
-                sigc::mem_fun(*this, &ThisType::on_tick_ended));
         thread = std::jthread(std::bind(&ThisType::process_thread,
                     this,
                     std::placeholders::_1));
@@ -79,7 +75,8 @@ namespace pnd::gol
         getmaxyx(wnd, term_y, term_x);
         for (int i = offset_x; i < offset_x + term_x; i++)
             for (int j = offset_y; j < offset_y + term_y; j++)
-                if (alives.contains({i, j}))
+                if (engine.get_field().is_alive({static_cast<dim_t>(i),
+                            static_cast<dim_t>(j)}))
                     mvwaddch(wnd,
                             j - offset_y, i - offset_x,
                             alive_char_present);
@@ -150,8 +147,8 @@ namespace pnd::gol
                 {
                     engine.change_cell(
                             {
-                                cursor_x + offset_x,
-                                cursor_y + offset_y
+                                static_cast<dim_t>(cursor_x + offset_x),
+                                static_cast<dim_t>(cursor_y + offset_y)
                             });
                 }
             break;
@@ -182,13 +179,6 @@ namespace pnd::gol
         thread.request_stop();
         thread.join();
         endwin();
-    }
-
-    template<EngineConc E>
-    void WindowBasic<E>::on_tick_ended(const Alives &alives)
-    {
-        std::scoped_lock<std::mutex> lock(mutex);
-        this->alives = std::move(alives);
     }
 
     using Window = WindowBasic<Engine>;

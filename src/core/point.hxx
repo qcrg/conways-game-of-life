@@ -1,20 +1,18 @@
 #pragma once
 
+#include "common.hxx"
+
 #include <cstdint>
 #include <functional>
 #include <unordered_set>
 
 namespace pnd::gol
 {
-
     struct Point
     {
-        int x, y;
+        dim_t x, y;
         bool operator==(const Point &o) const;
     };
-
-    using Alives = std::unordered_set<Point>;
-
 } //namespace pnd::gol
 
 template<>

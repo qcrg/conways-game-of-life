@@ -7,7 +7,6 @@
 #include <chrono>
 #include <atomic>
 #include <thread>
-#include <mutex>
 
 namespace pnd::gol
 {
@@ -22,8 +21,7 @@ namespace pnd::gol
         t.one_step();
         t.set_speed(int());
         t.change_cell(Point());
-        std::is_same_v<sigc::signal<void(Alives)>,
-            decltype(t.field_changed)>;
+        { t.get_field() } -> std::same_as<FieldConc>;
     };
 
     template<FieldConc F>
@@ -34,11 +32,9 @@ namespace pnd::gol
         FieldType field;
         unsigned int tps;
         std::atomic<bool> is_play, is_one_step, quit_from_loop;
-        std::mutex mutex;
         std::thread thread;
 
         void tick();
-
     public:
         EngineBasic();
 
@@ -52,9 +48,8 @@ namespace pnd::gol
         void set_speed(unsigned int ticks_per_second);
         unsigned int get_speed() const;
         void change_cell(const Point &point);
-
-        sigc::signal<void(const Alives &)> field_changed;
-
+        
+        const FieldType &get_field() const;
     };
 
     template<FieldConc F>
@@ -139,38 +134,43 @@ namespace pnd::gol
     template<FieldConc F>
     void EngineBasic<F>::change_cell(const Point &point)
     {
-        std::scoped_lock<std::mutex> lock(mutex);
         field.change(point);
-        field_changed.emit(field.get_alives());
     }
 
     template<FieldConc F>
     void EngineBasic<F>::tick()
     {
-        const auto &alive = field.get_alives();
+        const auto &alive = field.get_alive();
         std::unordered_set<Point> for_change;
         auto is_for_change = [&](const Point &p)
         {
             int alive_count = 0;
             for (int i = -1; i < 2; i++)
                 for (int j = -1; j < 2; j++)
-                    if (field.is_alive({p.x + i, p.y + j}))
+                    if (field.is_alive({static_cast<dim_t>(p.x + i),
+                                static_cast<dim_t>(p.y + j)}))
                         alive_count++;
             return field.is_alive(p) ?
                 !(alive_count == 3 || alive_count == 4) :
                 alive_count == 3;
         };
-        std::scoped_lock lock(mutex);
         for (const auto &p : alive)
         {
             for (int i = -1; i < 2; i++)
                 for (int j = -1; j < 2; j++)
-                    if (is_for_change({p.x + i, p.y + j}))
-                        for_change.insert({p.x + i, p.y + j});
+                    if (is_for_change({static_cast<dim_t>(p.x + i),
+                                static_cast<dim_t>(p.y + j)}))
+                        for_change.insert({static_cast<dim_t>(p.x + i),
+                                static_cast<dim_t>(p.y + j)});
         }
         for (const auto &p : for_change)
             field.change(p);
-        field_changed.emit(field.get_alives());
+    }
+
+    template<FieldConc F>
+    const F &EngineBasic<F>::get_field() const
+    {
+        return field;
     }
 
     using Engine = EngineBasic<Field>;
