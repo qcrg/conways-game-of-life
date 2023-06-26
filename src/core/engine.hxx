@@ -55,7 +55,7 @@ namespace pnd::gol
     template<FieldConc F>
     EngineBasic<F>::EngineBasic()
         : tps{4}
-        , is_play{true}
+        , is_play{false}
         , is_one_step{false}
         , quit_from_loop{false}
     {
