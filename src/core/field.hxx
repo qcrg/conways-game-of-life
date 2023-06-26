@@ -62,8 +62,8 @@ namespace pnd::gol
     template<AliveConc T>
     void FieldBasic<T>::change(const Point &p)
     {
+        get(p) ? alive.remove(p) : alive.add(p);
         get(p) = !get(p);
-        get(p) ? alive.add(p) : alive.remove(p);
     }
 
     template<AliveConc T>

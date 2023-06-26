@@ -35,13 +35,19 @@ namespace pnd::gol
 #else
     struct SdlDebugOutput
     {
-        SdlDebugOutput() {}
+        SdlDebugOutput()
+        {}
         SdlDebugOutput(SdlRendererRef rndr,
-                Color color = Color::def(DefColors::WHITE)) { (void)rndr; (void)color; }
-        void add_line(DebugLineCreator line) { (void)line; }
-        void add_lines(std::initializer_list<DebugLineCreator> lines) { (void)lines; }
-        void render() {}
-        void render(const SdlRendererRef &rndr) { (void)rndr; }
+                Color color = Color::def(DefColors::WHITE))
+        { (void)rndr; (void)color; }
+        void add_line(DebugLineCreator line)
+        { (void)line; }
+        void add_lines(std::initializer_list<DebugLineCreator> lines)
+        { (void)lines; }
+        void render()
+        {}
+        void render(const SdlRendererRef &rndr)
+        { (void)rndr; }
     };
 #endif //ifdef PND_SDL_DEBUG
 } //namespace pnd::gol

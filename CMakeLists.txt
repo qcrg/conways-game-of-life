@@ -8,14 +8,18 @@ if ("${WINDOW_TYPE}" STREQUAL "")
     set(WINDOW_TYPE "curses")
 endif ()
 
-if ("${BUILD_TYPE}" STREQUAL "")
-    set(BUILD_TYPE "Debug")
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+    set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-### sdl debug output
-if ("${BUILD_TYPE}" STREQUAL "Debug")
+### build type dependencies
+if (CMAKE_BUILD_TYPE EQUAL "Release")
+    #add_compile_options(-DNDEBUG -O3)
+else () # Debug
+    #add_compile_options(-O0 -ggdb)
     set(SDL_DEBUG 1)
-endif()
+endif ()
+
 
 ### general source
 file(GLOB_RECURSE SRC_LIST src/*.cxx)
@@ -49,7 +53,7 @@ elseif ("${WINDOW_TYPE}" STREQUAL "sdl") ### SDL
     pkg_check_modules(TTF REQUIRED SDL2_ttf)
     include_directories(${TTF_INCLUDE_DIRS})
     list(APPEND LIBS_LIST ${TTF_LIBRARIES})
-    if ("${BUILD_TYPE}" STREQUAL "Debug" AND
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND
             "${SDL_DEBUG}")
         add_compile_options(-DPND_SDL_DEBUG)
     endif()
@@ -75,12 +79,6 @@ set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 include_directories(src)
-
-if (CMAKE_BUILD_TYPE EQUAL "Release")
-    add_compile_options(-DNDEBUG -O3)
-else () # Debug
-    add_compile_options(-O0 -ggdb)
-endif ()
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 

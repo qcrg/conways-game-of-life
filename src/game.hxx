@@ -31,6 +31,7 @@ namespace pnd::gol
         using DisplayType = D;
 
         GameBasic();
+        ~GameBasic();
 
     };
 
@@ -46,8 +47,13 @@ namespace pnd::gol
         engine.change_cell({6, 6});
         engine.change_cell({6, 7});
 
-
         engine.run();
+    }
+
+    template<AliveConc A, FieldConc F, EngineConc E, DisplayConc D>
+    GameBasic<A, F, E, D>::~GameBasic()
+    {
+        engine.quit();
     }
 
     using Game = GameBasic<Alive, Field, Engine, Window>;

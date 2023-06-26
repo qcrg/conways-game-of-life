@@ -28,7 +28,6 @@ namespace pnd::gol
         void add(const Point &p);
         void remove(const Point &p);
         bool is_alive(const Point &p) const;
-        bool operator[](const Point &p) const;
     };
 
     auto Alive::begin()
@@ -65,10 +64,4 @@ namespace pnd::gol
     {
         return data.contains(p);
     }
-
-    bool Alive::operator[](const Point &p) const
-    {
-        return is_alive(p);
-    }
-
 } //namespace pnd::gol
