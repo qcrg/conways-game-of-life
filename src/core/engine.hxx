@@ -2,7 +2,6 @@
 
 #include "field.hxx"
 
-#include <sigc++/sigc++.h>
 #include <concepts>
 #include <chrono>
 #include <atomic>

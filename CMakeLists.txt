@@ -70,11 +70,6 @@ else ()
 endif ()
 add_display_src(${WINDOW_TYPE})
 
-### sigc++
-pkg_check_modules(SIGC REQUIRED sigc++-3.0)
-include_directories(${SIGC_INCLUDE_DIRS})
-list(APPEND LIBS_LIST ${SIGC_LIBRARIES})
-
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic)
 

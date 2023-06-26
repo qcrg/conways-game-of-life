@@ -3,7 +3,6 @@
 #include "color.hxx"
 
 #include <SDL2/SDL.h>
-#include <sigc++/sigc++.h>
 #include <string>
 #include <atomic>
 #include <memory>

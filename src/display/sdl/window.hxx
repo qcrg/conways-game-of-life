@@ -10,7 +10,6 @@
 #include <mutex>
 #include <shared_mutex>
 #include <stdexcept>
-#include <sigc++/sigc++.h>
 #include <algorithm>
 
 #include <format>
