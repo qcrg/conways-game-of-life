@@ -11,8 +11,7 @@
 #include <shared_mutex>
 #include <stdexcept>
 #include <algorithm>
-
-#include <format>
+#include <sstream>
 
 namespace pnd::gol
 {
@@ -302,34 +301,39 @@ namespace pnd::gol
     {
         std::initializer_list<DebugLineCreator> list = {
             [&](){
-                return std::format("Size: {}", ctx.size);
+                std::stringstream ss;
+                ss << "Size: " << ctx.size;
+                return ss.str();
             },
             [&]() {
-                return std::format("Offset (X, Y): ({}, {})",
-                    ctx.offset_x,
-                    ctx.offset_y
-                );
+                std::stringstream ss;
+                ss << "Offset (X, Y): (" <<
+                    ctx.offset_x << ", " <<
+                    ctx.offset_y << ")";
+                return ss.str();
             },
             []() {
                 int x, y;
                 uint32_t state = SDL_GetMouseState(&x, &y);
-                return std::format("Mouse (X, Y): ({}, {})\n"
-                    "Mouse (L,M,R): ({},{},{})",
-                    x, y,
-                    (int)static_cast<bool>(SDL_BUTTON(1) & state),
-                    (int)static_cast<bool>(SDL_BUTTON(2) & state),
-                    (int)static_cast<bool>(SDL_BUTTON(3) & state)
-                );
+                std::stringstream ss;
+                ss << "Mouse (X, Y): (" <<
+                    x << ", " << y << ")\n" <<
+                    "Mouse (L,M,R): (" <<
+                    (int)static_cast<bool>(SDL_BUTTON(1) & state) << "," <<
+                    (int)static_cast<bool>(SDL_BUTTON(2) & state) << "," <<
+                    (int)static_cast<bool>(SDL_BUTTON(3) & state) << ")";
+                return ss.str();
             },
             [&]() {
                 int x, y;
                 SDL_GetMouseState(&x, &y);
-                return std::format(
-                    "Real current index (X, Y): ({}, {})\n"
-                    "Current mouse index (X, Y): ({}, {})\n",
-                    debug_ctx.real_cur_x_idx, debug_ctx.real_cur_y_idx,
-                    debug_ctx.cur_x_idx, debug_ctx.cur_y_idx
-                );
+                std::stringstream ss;
+                ss << "Real current index (X, Y): (" <<
+                    debug_ctx.real_cur_x_idx << ", " <<
+                    debug_ctx.real_cur_y_idx << ")\n" <<
+                    "Current mouse index (X, Y): (" <<
+                    debug_ctx.cur_x_idx << ", " << debug_ctx.cur_y_idx << ")\n";
+                return ss.str();
             }
         };
         debug_output.add_lines(list);

@@ -49,8 +49,6 @@ elseif ("${WINDOW_TYPE}" STREQUAL "sdl") ### SDL
 
     ### SDL2_ttf
     find_package(SDL2_ttf REQUIRED)
-    #include_directories(${SDL2_ttf_INCLUDE_DIRS})
-    #list(APPEND LIBS_LIST ${SDL2_ttf_LIBRARIES})
     list(APPEND LIBS_LIST SDL2_ttf::SDL2_ttf)
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND
             "${SDL_DEBUG}")

@@ -6,8 +6,7 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include <SDL2/SDL_ttf.h>
-#include <format>
+#include <SDL_ttf.h>
 
 namespace pnd::gol
 {

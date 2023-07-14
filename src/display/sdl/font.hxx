@@ -3,7 +3,7 @@
 #include "color.hxx"
 #include "sdl.hxx"
 
-#include <SDL2/SDL_ttf.h>
+#include <SDL_ttf.h>
 #include <memory>
 
 namespace pnd::gol
