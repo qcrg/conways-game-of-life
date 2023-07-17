@@ -5,7 +5,7 @@
 #include <thread>
 #include <gtkmm/application.h>
 #include <gtkmm/builder.h>
-#include <stdexcepts>
+#include <stdexcept>
 
 namespace pnd::gol
 {

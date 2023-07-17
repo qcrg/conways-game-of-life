@@ -71,13 +71,9 @@ elseif ("${WINDOW_TYPE}" STREQUAL "gtk") ### GTK
         DEPENDS ${GLADE_FILE})
     add_custom_target(convert-gtk4-ui DEPENDS ${INTERFACE_FILE})
     include_directories(${GEN_PATH})
-elseif ("${WINDOW_TYPE}" STREQUAL "qt") ### QT
-    find_package(QT REQUIRED)
-    include_directories(${QT_INCLUDE_DIRS})
-    list(APPEND LIBS_LIST ${QT_LIBRARIES})
 else ()
     message(FATAL_ERROR
-        "Window type is undefined [${WINDOW_TYPE}]: curses, sdl, gtk, or qt")
+        "Window type is undefined [${WINDOW_TYPE}]: curses, sdl or gtk")
 endif ()
 add_display_src(${WINDOW_TYPE})
 

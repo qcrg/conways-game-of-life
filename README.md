@@ -11,7 +11,6 @@ cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/ -S./ && cmake --build build/ -j8
 - curses
 - sdl
 - gtk (not implemented)
-- qt (not implemented)
 
 ### Controls
 - Common
@@ -31,15 +30,9 @@ i - insert mode
 space - change cell in insert mode
 ESC - escape from insert mode
 ```
-- sdl
+- GUI
 ```
 middle button + mouse motion - screen movement
 left button - change cell
 mouse wheel - zoom
-```
-- gtk
-```
-```
-- qt
-```
 ```
