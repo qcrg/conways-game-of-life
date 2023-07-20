@@ -32,7 +32,7 @@ namespace pnd::gol
     WindowBasic<E>::WindowBasic(E &engine)
         : engine{engine}
     {
-        thread = std::thread(std::bind(process_thread, this));
+        thread = std::thread(std::bind(&WindowBasic::process_thread, this));
     }
 
     template<EngineConc E>

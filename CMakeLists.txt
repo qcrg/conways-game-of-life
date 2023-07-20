@@ -14,6 +14,7 @@ endif()
 
 set(GEN_PATH "${CMAKE_BINARY_DIR}/gen")
 file(MAKE_DIRECTORY ${GEN_PATH})
+include_directories(${GEN_PATH})
 
 ### build type dependencies
 if (CMAKE_BUILD_TYPE EQUAL "Release")
@@ -63,14 +64,12 @@ elseif ("${WINDOW_TYPE}" STREQUAL "gtk") ### GTK
     list(APPEND LIBS_LIST ${GTK_LIBRARIES})
 
     ### convert gtk3 glade file to gtk4 ui file target
-    set(GLADE_FILE "${CMAKE_SOURCE_DIR}/src/display/gtk/interface.glade")
-    set(INTERFACE_FILE ${GEN_PATH}/interface.ui)
+    set(CONVERT_FILE "${CMAKE_SOURCE_DIR}/src/display/gtk/interface.cmb")
+    set(INTERFACE_FILE "${CMAKE_SOURCE_DIR}/src/display/gtk/interface.ui")
     add_custom_command(OUTPUT ${INTERFACE_FILE}
-        COMMAND gtk4-builder-tool simplify --3to4
-            ${GLADE_FILE} > ${INTERFACE_FILE}
-        DEPENDS ${GLADE_FILE})
-    add_custom_target(convert-gtk4-ui DEPENDS ${INTERFACE_FILE})
-    include_directories(${GEN_PATH})
+        COMMAND cambalache -E ${CONVERT_FILE}
+        DEPENDS ${CONVERT_FILE})
+    add_custom_target(export-cambalache DEPENDS ${INTERFACE_FILE})
 else ()
     message(FATAL_ERROR
         "Window type is undefined [${WINDOW_TYPE}]: curses, sdl or gtk")
@@ -88,5 +87,5 @@ target_link_libraries(${PROJECT_NAME} ${LIBS_LIST})
 
 ### gtk additional dependency
 if ("${WINDOW_TYPE}" STREQUAL "gtk") ### GTK
-    add_dependencies(${PROJECT_NAME} convert-gtk4-ui)
+    add_dependencies(${PROJECT_NAME} export-cambalache)
 endif()
