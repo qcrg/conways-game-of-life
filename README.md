@@ -10,7 +10,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -Bbuild/ -S./ && cmake --build build/ -j8
 ### Dislpay Types
 - curses
 - sdl
-- gtk (not implemented)
+- gtk (partial implementation)
 
 ### Controls
 - Common

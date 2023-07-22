@@ -6,6 +6,7 @@
 #include <chrono>
 #include <atomic>
 #include <thread>
+#include <mutex>
 
 namespace pnd::gol
 {
@@ -26,12 +27,14 @@ namespace pnd::gol
     template<FieldConc F>
     class EngineBasic
     {
+    public:
         using FieldType = F;
-
+    private:
         FieldType field;
         unsigned int tps;
         std::atomic<bool> is_play, is_one_step, quit_from_loop;
         std::thread thread;
+        std::mutex mutex;
 
         void tick();
     public:
@@ -58,6 +61,7 @@ namespace pnd::gol
         , is_one_step{false}
         , quit_from_loop{false}
     {
+        (void)mutex.try_lock();
     }
 
     template<FieldConc F>
@@ -75,9 +79,10 @@ namespace pnd::gol
             auto last_tick_time = clock::now();
             while (!quit_from_loop)
             {
-                auto mil =
+                int64_t mil =
                     std::chrono::duration_cast<std::chrono::milliseconds>(
                             clock::now() - last_tick_time).count();
+                std::scoped_lock{mutex};
                 if (is_play && (1000 / tps) < mil)
                 {
                     last_tick_time = clock::now();
@@ -87,6 +92,13 @@ namespace pnd::gol
                 {
                     this->tick();
                     is_one_step = false;
+                    (void)mutex.try_lock();
+                }
+                else
+                {
+                    auto rest_time =
+                        std::chrono::milliseconds((1000 / tps) - mil);
+                    std::this_thread::sleep_for(rest_time);
                 }
             }
         };
@@ -97,24 +109,28 @@ namespace pnd::gol
     template<FieldConc F>
     void EngineBasic<F>::quit()
     {
+        mutex.unlock();
         quit_from_loop = true;
     }
 
     template<FieldConc F>
     void EngineBasic<F>::play()
     {
+        mutex.unlock();
         is_play = true;
     }
 
     template<FieldConc F>
     void EngineBasic<F>::pause()
     {
+        (void)mutex.try_lock();
         is_play = false;
     }
 
     template<FieldConc F>
     void EngineBasic<F>::one_step()
     {
+        mutex.unlock();
         is_one_step = true;
     }
 
