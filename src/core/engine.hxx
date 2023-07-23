@@ -96,9 +96,8 @@ namespace pnd::gol
                 }
                 else
                 {
-                    auto rest_time =
-                        std::chrono::milliseconds((1000 / tps) - mil);
-                    std::this_thread::sleep_for(rest_time);
+                    std::this_thread::sleep_for(
+                        std::chrono::milliseconds((1000 / tps) - mil));
                 }
             }
         };

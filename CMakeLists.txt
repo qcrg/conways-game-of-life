@@ -64,10 +64,17 @@ elseif ("${WINDOW_TYPE}" STREQUAL "gtk") ### GTK
     list(APPEND LIBS_LIST ${GTK_LIBRARIES})
 
     ### convert gtk3 glade file to gtk4 ui file target
+    set(INTERFACE_FILE_NAME "interface.ui")
     set(CONVERT_FILE
         "${CMAKE_SOURCE_DIR}/src/display/gtk/interface/interface.cmb")
     set(INTERFACE_FILE
-        "${CMAKE_SOURCE_DIR}/src/display/gtk/interface/interface.ui")
+        "${CMAKE_SOURCE_DIR}/src/display/gtk/interface/${INTERFACE_FILE_NAME}")
+    file(CREATE_LINK ${INTERFACE_FILE} ${GEN_PATH}/${INTERFACE_FILE_NAME}
+        RESULT TMP
+        SYMBOLIC)
+    if (${TMP})
+        message(FATAL_ERROR "${TMP})")
+    endif ()
     add_custom_command(OUTPUT ${INTERFACE_FILE}
         COMMAND cambalache -E ${CONVERT_FILE}
         DEPENDS ${CONVERT_FILE})
